@@ -254,6 +254,7 @@ clockintr()
     uint64 oldest = p->fork_times[p->fork_times_idx];
     if(ticks - oldest <= EDR_FORK_RATE_WINDOW_TICKS){
       p->is_sandboxed = 1;
+      p->sandbox_reason = 1; // EDR_REASON_RATE
       p->need_propagation = 1;
       __sync_synchronize();
       extern volatile int edr_work_pending;

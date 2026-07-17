@@ -14,6 +14,7 @@ struct proc *initproc;
 
 volatile int edr_work_pending = 0;
 volatile int edr_lock = 0;
+extern uint ticks;
 
 int nextpid = 1;
 struct spinlock pid_lock;
@@ -472,6 +473,8 @@ propagate_sandbox(struct proc *root)
     if(p->state != UNUSED && p != root && is_descendant(p, root)){
       acquire(&p->lock);
       p->is_sandboxed = 2; // QUARANTINED
+      p->sandbox_reason = 2; // EDR_REASON_VOLUME
+      p->quarantine_tick = ticks;
       release(&p->lock);
     }
   }
@@ -515,6 +518,8 @@ scheduler(void)
               if (count >= EDR_TREE_VOLUME_THRESHOLD) {
                 acquire(&pp->lock);
                 pp->is_sandboxed = 2;
+                pp->sandbox_reason = 2; // EDR_REASON_VOLUME
+                pp->quarantine_tick = ticks;
                 release(&pp->lock);
                 propagate_sandbox(pp);
               }
