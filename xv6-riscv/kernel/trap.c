@@ -89,6 +89,7 @@ usertrap(void)
       // 1. Cập nhật thời gian chạy
       p->ticks_used++;
       p->total_runtime++;
+      p->cumulative_run_time++;
 
       // 2. Lấy quantum tương ứng với priority
       int quantum;
@@ -102,6 +103,7 @@ usertrap(void)
           p->priority++;
 
         p->ticks_used = 0;
+        p->cumulative_run_time = 0;
         need_yield = 1;
       } else if(has_higher_priority(p->priority)){
         // Bị tiền chiếm dụng bởi tiến trình có độ ưu tiên cao hơn
@@ -196,6 +198,7 @@ kerneltrap()
       // 1. Cập nhật thời gian chạy
       p->ticks_used++;
       p->total_runtime++;
+      p->cumulative_run_time++;
 
       // 2. Xác định quantum theo priority
       int quantum;
@@ -209,6 +212,7 @@ kerneltrap()
           p->priority++;
 
         p->ticks_used = 0;
+        p->cumulative_run_time = 0;
         need_yield = 1;
       } else if(has_higher_priority(p->priority)){
         // Bị tiền chiếm dụng bởi tiến trình có độ ưu tiên cao hơn
@@ -243,6 +247,20 @@ clockintr()
     wakeup(&ticks);
     release(&tickslock);
   }
+
+  // --- EDR Tier-1 Rate-based Detector ---
+  struct proc *p = myproc();
+  if(p && p->fork_times[p->fork_times_idx] != 0){
+    uint64 oldest = p->fork_times[p->fork_times_idx];
+    if(ticks - oldest <= EDR_FORK_RATE_WINDOW_TICKS){
+      p->is_sandboxed = 1;
+      p->need_propagation = 1;
+      __sync_synchronize();
+      extern volatile int edr_work_pending;
+      edr_work_pending = 1;
+    }
+  }
+  // --------------------------------------
 
   // ask for the next timer interrupt. this also clears
   // the interrupt request. 1000000 is about a tenth

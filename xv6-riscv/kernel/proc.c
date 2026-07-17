@@ -12,6 +12,9 @@ struct proc proc[NPROC];
 
 struct proc *initproc;
 
+volatile int edr_work_pending = 0;
+volatile int edr_lock = 0;
+
 int nextpid = 1;
 struct spinlock pid_lock;
 
@@ -436,6 +439,44 @@ kwait(uint64 addr)
   }
 }
 
+// EDR helpers
+int
+is_descendant(struct proc *child, struct proc *root)
+{
+  struct proc *curr = child->parent;
+  while(curr){
+    if(curr == root) return 1;
+    curr = curr->parent;
+  }
+  return 0;
+}
+
+int
+count_live_descendants(struct proc *root)
+{
+  int count = 0;
+  struct proc *p;
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->state != UNUSED && p != root && is_descendant(p, root)){
+      count++;
+    }
+  }
+  return count;
+}
+
+void
+propagate_sandbox(struct proc *root)
+{
+  struct proc *p;
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->state != UNUSED && p != root && is_descendant(p, root)){
+      acquire(&p->lock);
+      p->is_sandboxed = 2; // QUARANTINED
+      release(&p->lock);
+    }
+  }
+}
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -455,6 +496,37 @@ scheduler(void)
 
   for(;;){
     intr_on();
+
+    // --- EDR Deferred Work ---
+    if (edr_work_pending) {
+      if (__sync_lock_test_and_set(&edr_lock, 1) == 0) {
+        if (edr_work_pending) {
+          edr_work_pending = 0;
+          
+          acquire(&wait_lock);
+          for (struct proc *pp = proc; pp < &proc[NPROC]; pp++) {
+            acquire(&pp->lock);
+            int need_prop = pp->need_propagation;
+            pp->need_propagation = 0;
+            release(&pp->lock);
+
+            if (need_prop) {
+              int count = count_live_descendants(pp);
+              if (count >= EDR_TREE_VOLUME_THRESHOLD) {
+                acquire(&pp->lock);
+                pp->is_sandboxed = 2;
+                release(&pp->lock);
+                propagate_sandbox(pp);
+              }
+            }
+          }
+          release(&wait_lock);
+        }
+        __sync_lock_release(&edr_lock);
+      }
+    }
+    // -------------------------
+
     intr_off();
 
     int found = 0;
