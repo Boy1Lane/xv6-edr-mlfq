@@ -539,6 +539,11 @@ scheduler(void)
         acquire(&p->lock);
         if(p->state == RUNNABLE && p->priority == pr) {
 
+          if (p->is_sandboxed == 2 && p->killed == 0) {
+            release(&p->lock);
+            continue;
+          }
+
           // Switch to chosen process
           p->state = RUNNING;
           c->proc = p;
@@ -788,6 +793,8 @@ procdump(void)
     else
       state = "???";
     printf("%d %s %s", p->pid, state, p->name);
+    if(p->is_sandboxed == 2)
+      printf(" (quarantined)");
     printf("\n");
   }
 }

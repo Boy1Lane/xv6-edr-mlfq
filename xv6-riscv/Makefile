@@ -147,6 +147,7 @@ UPROGS=\
 	$U/_dorphan\
 	$U/_ps_monitor\
 	$U/_cpuload\
+	$U/_multitest\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
