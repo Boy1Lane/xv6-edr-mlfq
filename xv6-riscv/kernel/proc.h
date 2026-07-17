@@ -108,6 +108,17 @@ struct proc {
   int ticks_used;      // Số tick đã chạy trong mức ưu tiên hiện tại
   int wait_time;       // Thời gian chờ (dùng cho Aging - nếu làm)
   int total_runtime;   // Tổng thời gian chạy của tiến trình
+
+  // --- Security Metadata mở rộng ---
+  uint64 fork_times[EDR_FORK_SAMPLE]; // ring buffer thời điểm (tick) của N lần fork gần nhất
+  uint   fork_times_idx;              // con trỏ ghi ring buffer
+  uint   cumulative_run_time;         // tổng thời gian chạy thực tế trong hàng đợi hiện tại (Anti-Gaming)
+  uint8  is_sandboxed;                // 0 = bình thường, 1 = WARN (soft), 2 = QUARANTINED (hard)
+  uint8  sandbox_reason;              // enum lý do
+  uint64 quarantine_tick;             // thời điểm bị cô lập
+  uint8  need_propagation;            // cờ: cần lan truyền sandbox xuống cây con
+  uint8  edr_trusted;                 // EDR daemon path match
 };
 
 void promote_all(void);
+int has_higher_priority(int priority);

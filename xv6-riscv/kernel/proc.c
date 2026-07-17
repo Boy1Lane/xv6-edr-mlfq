@@ -129,6 +129,15 @@ found:
   p->wait_time = 0;
   p->total_runtime = 0;
 
+  for(int i = 0; i < EDR_FORK_SAMPLE; i++) p->fork_times[i] = 0;
+  p->fork_times_idx = 0;
+  p->cumulative_run_time = 0;
+  p->is_sandboxed = 0;
+  p->sandbox_reason = 0;
+  p->quarantine_tick = 0;
+  p->need_propagation = 0;
+  p->edr_trusted = 0;
+
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
@@ -173,6 +182,15 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+
+  for(int i = 0; i < EDR_FORK_SAMPLE; i++) p->fork_times[i] = 0;
+  p->fork_times_idx = 0;
+  p->cumulative_run_time = 0;
+  p->is_sandboxed = 0;
+  p->sandbox_reason = 0;
+  p->quarantine_tick = 0;
+  p->need_propagation = 0;
+  p->edr_trusted = 0;
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -432,6 +450,9 @@ scheduler(void)
   struct cpu *c = mycpu();
 
   c->proc = 0;
+  
+  static int last_idx = 0;
+
   for(;;){
     intr_on();
     intr_off();
@@ -440,13 +461,16 @@ scheduler(void)
 
     // Quét theo mức ưu tiên: 0 (cao) -> 1 -> 2 (thấp)
     for(int pr = 0; pr < MLFQ_LEVELS; pr++){
-      for(p = proc; p < &proc[NPROC]; p++) {
+      for(int i = 0; i < NPROC; i++) {
+        int idx = (last_idx + 1 + i) % NPROC;
+        p = &proc[idx];
         acquire(&p->lock);
         if(p->state == RUNNABLE && p->priority == pr) {
 
           // Switch to chosen process
           p->state = RUNNING;
           c->proc = p;
+          last_idx = idx;
           swtch(&c->context, &p->context);
 
           // Process is done running for now
@@ -563,6 +587,7 @@ sleep(void *chan, struct spinlock *lk)
   // Go to sleep.
   p->chan = chan;
   p->state = SLEEPING;
+  p->ticks_used = 0; // Đặt lại để khi thức dậy có quantum đầy đủ
 
   sched();
 
@@ -707,4 +732,15 @@ void promote_all(void){
     }
     release(&p->lock);
   }
+}
+
+// Check if there is any runnable process with higher priority
+int has_higher_priority(int priority) {
+  struct proc *p;
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->state == RUNNABLE && p->priority < priority){
+      return 1;
+    }
+  }
+  return 0;
 }

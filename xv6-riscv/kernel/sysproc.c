@@ -29,7 +29,21 @@ sys_getpid(void)
 uint64
 sys_fork(void)
 {
-  return kfork();
+  int npid = kfork();
+  if(npid > 0){
+    struct proc *p = myproc();
+    uint current_tick;
+
+    acquire(&tickslock);
+    current_tick = ticks;
+    release(&tickslock);
+
+    acquire(&p->lock);
+    p->fork_times[p->fork_times_idx] = current_tick;
+    p->fork_times_idx = (p->fork_times_idx + 1) % EDR_FORK_SAMPLE;
+    release(&p->lock);
+  }
+  return npid;
 }
 
 uint64

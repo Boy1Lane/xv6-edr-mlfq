@@ -18,3 +18,8 @@
 #define QUANTUM_2 8
 #define AGING_INTERVAL 100
 
+// EDR Configuration Constants
+#define EDR_FORK_SAMPLE 6
+#define EDR_FORK_RATE_WINDOW_TICKS 10
+#define EDR_TREE_VOLUME_THRESHOLD 16
+#define EDR_DAEMON_PATH "/edr_daemon"

@@ -81,10 +81,10 @@ usertrap(void)
     kexit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  // give up the CPU if this is a timer interrupt.
   if(which_dev == 2)
   { 
     struct proc *p = myproc();
+    int need_yield = 0;
     if(p){
       // 1. Cập nhật thời gian chạy
       p->ticks_used++;
@@ -101,18 +101,24 @@ usertrap(void)
         if(p->priority < 2)
           p->priority++;
 
-      p->ticks_used = 0;
-      yield();
+        p->ticks_used = 0;
+        need_yield = 1;
+      } else if(has_higher_priority(p->priority)){
+        // Bị tiền chiếm dụng bởi tiến trình có độ ưu tiên cao hơn
+        need_yield = 1;
       }
     }
 
     // 4. Aging toàn hệ thống
     if(ticks % AGING_INTERVAL == 0){
       promote_all();
+      need_yield = 1;
     }
 
-    // 5. Nhường CPU (time-sharing bình thường)
-    yield();
+    // 5. Nhường CPU có điều kiện
+    if(need_yield){
+      yield();
+    }
   }
 
   prepare_return();
@@ -185,6 +191,7 @@ kerneltrap()
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2 && myproc() != 0){
     struct proc *p = myproc();
+    int need_yield = 0;
     if(p){
       // 1. Cập nhật thời gian chạy
       p->ticks_used++;
@@ -202,17 +209,23 @@ kerneltrap()
           p->priority++;
 
         p->ticks_used = 0;
-        yield();
+        need_yield = 1;
+      } else if(has_higher_priority(p->priority)){
+        // Bị tiền chiếm dụng bởi tiến trình có độ ưu tiên cao hơn
+        need_yield = 1;
       }
     }
 
     // 4. Aging
     if(ticks % AGING_INTERVAL == 0){
       promote_all();
+      need_yield = 1;
     }
 
-    // 5. Nhường CPU (giữ hành vi xv6)
-    yield();
+    // 5. Nhường CPU có điều kiện
+    if(need_yield){
+      yield();
+    }
   }
 
   // the yield() may have caused some traps to occur,
