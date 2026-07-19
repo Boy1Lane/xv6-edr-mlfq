@@ -63,7 +63,7 @@ Mini-EDR hoạt động theo mô hình phát hiện hai lớp (Tiered Detection)
 |       │ (sys_fork)│ (Xác thực đường dẫn)      │             |
 |       ▼           ▼                           │             |
 |  +────────────────────────────────+           │             |
-|  |  Tier-1 Rate-based Detector   |           │             |
+|  |  Tier-1 Rate-based Detector    |           │             |
 |  |  - Lưu trữ ticks gọi fork      |           │             |
 |  |  - Gán nhãn is_sandboxed = 1   |           │             |
 |  +────────────────────────────────+           │             |
@@ -76,7 +76,7 @@ Mini-EDR hoạt động theo mô hình phát hiện hai lớp (Tiered Detection)
 |                   │                           │             |
 |                   ▼ (Đưa cảnh báo vào)        │ (Lấy cảnh báo)
 |  +────────────────────────────────+           │             |
-|  |   Mảng vòng cảnh báo nhân     |───────────┼─────────────┘
+|  |   Mảng vòng cảnh báo nhân      |───────────┼─────────────┘
 |  |      (alerts / alert_lock)     |           │ get_security_alerts()
 |  +────────────────────────────────+           │
 |                                               │
