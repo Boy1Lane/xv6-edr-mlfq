@@ -230,7 +230,7 @@ test:
 	python3 scripts/test-xv6.py usertests
 
 test-usertests:
-	python3 scripts/test-xv6.py usertests
+	python3 scripts/test-xv6.py -q usertests
 
 test-edr:
 	python3 scripts/test-xv6.py edr

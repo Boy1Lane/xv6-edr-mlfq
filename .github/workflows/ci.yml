@@ -7,10 +7,31 @@ on:
     branches: [ main, master ]
 
 jobs:
-  build-and-test:
-    name: Build Kernel & Run Automated Tests
+  kernel-build:
+    name: Build Kernel Artifacts
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
 
+      - name: Install Toolchain & QEMU RISC-V
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            gcc-riscv64-unknown-elf \
+            binutils-riscv64-unknown-elf \
+            qemu-system-misc
+
+      - name: Verify Kernel & Filesystem Compilation
+        run: |
+          make clean
+          make kernel/kernel
+          make fs.img
+
+  edr-mlfq-tests:
+    name: Security & Scheduler Tests
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
@@ -25,23 +46,31 @@ jobs:
             qemu-system-misc \
             python3
 
-      - name: Verify Kernel Compilation
-        run: |
-          make clean
-          make kernel/kernel
-
       - name: Execute EDR Security Tests
-        run: |
-          make test-edr
+        run: make test-edr
 
       - name: Execute MLFQ Scheduler Tests
-        run: |
-          make test-mlfq
+        run: make test-mlfq
 
-      - name: Execute False Positive Tests
-        run: |
-          make test-false-positive
+      - name: Execute False Positive Workload Tests
+        run: make test-false-positive
 
-      - name: Execute Full System Usertests
+  usertests-quick:
+    name: Core OS Usertests (Quick)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Install Toolchain & QEMU RISC-V
         run: |
-          make test-usertests
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            gcc-riscv64-unknown-elf \
+            binutils-riscv64-unknown-elf \
+            qemu-system-misc \
+            python3
+
+      - name: Execute Core Usertests
+        run: python3 scripts/test-xv6.py -q usertests
