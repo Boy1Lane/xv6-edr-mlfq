@@ -1,0 +1,12 @@
+.git
+.github
+docs/
+*.o
+*.d
+*.asm
+*.sym
+kernel/kernel
+fs.img
+mkfs/mkfs
+__pycache__/
+*.log

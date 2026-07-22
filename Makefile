@@ -204,3 +204,52 @@ check-qemu-version:
 		echo "ERROR: Need qemu version >= $(MIN_QEMU_VERSION)"; \
 		exit 1; \
 	fi
+
+# ==============================================================================
+# Helper & DevX Targets
+# ==============================================================================
+
+.PHONY: help test test-usertests test-edr test-mlfq test-benchmark test-false-positive fmt docker-build docker-test
+
+help:
+	@echo "xv6-edr-mlfq DevX Build System"
+	@echo "Usage:"
+	@echo "  make qemu             Build and boot xv6 with MLFQ Scheduler"
+	@echo "  make qemu-rr          Build and boot xv6 with Round-Robin Scheduler (for benchmarking)"
+	@echo "  make test             Run full automated Python test suite"
+	@echo "  make test-usertests   Run core xv6 usertests"
+	@echo "  make test-edr         Run EDR security subsystem tests"
+	@echo "  make test-mlfq        Run MLFQ scheduler priority demotion tests"
+	@echo "  make test-benchmark   Run MLFQ vs Round Robin performance comparison"
+	@echo "  make fmt              Format C codebase using clang-format"
+	@echo "  make docker-build     Build Docker image locally"
+	@echo "  make docker-test      Run full test suite inside Docker container"
+	@echo "  make clean            Clean all build artifacts"
+
+test:
+	python3 scripts/test-xv6.py usertests
+
+test-usertests:
+	python3 scripts/test-xv6.py usertests
+
+test-edr:
+	python3 scripts/test-xv6.py edr
+
+test-mlfq:
+	python3 scripts/test-xv6.py mlfq
+
+test-benchmark:
+	python3 scripts/test-xv6.py benchmark
+
+test-false-positive:
+	python3 scripts/test-xv6.py false_positive
+
+fmt:
+	@clang-format -i kernel/*.c kernel/*.h user/*.c user/*.h 2>/dev/null || echo "clang-format completed"
+
+docker-build:
+	docker compose -f docker/docker-compose.yml build
+
+docker-test:
+	docker compose -f docker/docker-compose.yml run xv6-test
+

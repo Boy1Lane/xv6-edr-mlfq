@@ -1,0 +1,23 @@
+name: Code Quality & Style Check
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  clang-format-check:
+    name: C Code Formatting Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+
+      - name: Verify Formatting Compliance
+        run: |
+          clang-format --dry-run --Werror kernel/*.c kernel/*.h user/*.c user/*.h
