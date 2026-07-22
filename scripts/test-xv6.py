@@ -28,7 +28,15 @@ class QEMU(object):
                                       stderr=subprocess.STDOUT)
         self.output = ""
         self.outbytes = bytearray()       
-        time.sleep(1)
+        self.wait_boot()
+
+    def wait_boot(self):
+        deadline = time.time() + 15
+        while time.time() < deadline:
+            time.sleep(0.5)
+            self.read()
+            if "$" in self.output:
+                break
 
     def reset_fs(self):
         try:
@@ -245,7 +253,7 @@ def test_mlfq():
     q.read()
     
     # Kiểm tra tiêu đề hiển thị của ps_monitor
-    ok, _ = q.match(r".*PID.*Priority.*Ticks.*State.*", exit=False)
+    ok, _ = q.match(r".*PID.*Q.*TICKS.*STATE.*", exit=False)
     if not ok:
         print("FAIL: ps_monitor failed to start or output header")
         q.stop()
