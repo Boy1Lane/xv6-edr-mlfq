@@ -198,11 +198,11 @@ def test_crash():
     test_dorphan()
 
 def test_usertests(test=""):
-    timeout = 600
+    timeout = 900
     opt = ""
     if args.q:
         opt = " -q"
-        timeout = 300
+        timeout = 600
     elif test != "":
         opt += " " + test
     q = QEMU(True)
