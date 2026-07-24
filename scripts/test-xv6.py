@@ -88,8 +88,11 @@ class QEMU(object):
     def lines(self):
         return self.output.splitlines()
 
-    def error(self):
-        print("FAIL: match failed", regexps)
+    def error(self, *regexps):
+        if regexps:
+            print("FAIL: match failed", regexps)
+        else:
+            print("FAIL: timeout or test failed")
         self.save_output()
         self.stop()
         sys.exit(1)
@@ -102,7 +105,7 @@ class QEMU(object):
                 print(line)
                 last = i
         if last == -1 and exit:
-            self.error()
+            self.error(*regexps)
         l = ""
         if last >= 0:
             l = lines[last]

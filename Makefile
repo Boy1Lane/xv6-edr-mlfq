@@ -153,17 +153,19 @@ UPROGS=\
 	$U/_bench_rr\
 	$U/_bench_int\
 
-fs.img: mkfs/mkfs README.md $(UPROGS)
-	mkfs/mkfs fs.img README.md $(UPROGS)
+README: README.md
+	cp README.md README
+
+fs.img: mkfs/mkfs README $(UPROGS)
+	mkfs/mkfs fs.img README $(UPROGS)
 
 -include kernel/*.d user/*.d
 
 clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*/*.o */*.d */*.asm */*.sym \
-	$K/kernel fs.img \
-	mkfs/mkfs .gdbinit \
-        $U/usys.S \
+	$K/kernel fs.img README \
+	$U/usys.S \
 	$(UPROGS)
 
 # try to generate a unique GDB port
