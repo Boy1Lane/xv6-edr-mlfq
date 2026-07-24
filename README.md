@@ -1,6 +1,6 @@
 # 🛡️ xv6-edr-mlfq: Secure & High-Performance RISC-V Operating System Kernel
 
-[![Build & Test Verification](https://github.com/your-username/xv6-edr-mlfq/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/xv6-edr-mlfq/actions/workflows/ci.yml)
+[![Build & Test Verification](https://github.com/Boy1Lane/xv6-edr-mlfq/actions/workflows/ci.yml/badge.svg)](https://github.com/Boy1Lane/xv6-edr-mlfq/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Architecture: RISC-V 64](https://img.shields.io/badge/Architecture-RISC--V%2064bit-blue.svg)](https://riscv.org/)
 [![Scheduler: MLFQ](https://img.shields.io/badge/Scheduler-MLFQ%20(Anti--Gaming)-green.svg)]()
