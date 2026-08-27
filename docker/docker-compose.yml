@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  xv6-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: xv6-edr-mlfq-dev
+    volumes:
+      - ..:/workspace
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+  xv6-test:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: xv6-edr-mlfq-test
+    volumes:
+      - ..:/workspace
+    command: python3 scripts/test-xv6.py usertests
