@@ -1,0 +1,7 @@
+# Normalize all text files to LF in the repository and on checkout.
+# This is a Linux/RISC-V cross-build project; CRLF causes subtle breakage
+# in shell scripts and noisy diffs across platforms.
+* text=auto eol=lf
+
+# Windows-specific metadata files should keep their native format.
+*:Zone.Identifier -text
