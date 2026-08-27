@@ -1,0 +1,29 @@
+name: Code Quality & Style Check
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  code-style-check:
+    name: Codebase Formatting Audit
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/*azure* /etc/apt/sources.list.d/*microsoft*
+          sudo apt-get update && sudo apt-get install -y clang-format
+
+      # Hard gate: only sources owned by this project (see `make fmt-check`).
+      # Vendored xv6 files keep their original K&R style and are excluded.
+      - name: Check Formatting Standards
+        run: make fmt-check
+
+      - name: Validate Generated Whitelist Script
+        run: bash -n scripts/gen-whitelist.sh

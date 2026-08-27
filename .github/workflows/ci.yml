@@ -1,0 +1,122 @@
+name: CI Build & Test Verification
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  kernel-build:
+    name: Build Kernel Artifacts
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Install Toolchain & QEMU RISC-V
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/*azure* /etc/apt/sources.list.d/*microsoft*
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            gcc-riscv64-unknown-elf \
+            binutils-riscv64-unknown-elf \
+            qemu-system-misc
+
+      - name: Verify Kernel & Filesystem Compilation
+        run: |
+          make clean
+          make kernel/kernel
+          make fs.img
+
+  edr-mlfq-tests:
+    name: Security & Scheduler Tests
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Install Toolchain & QEMU RISC-V
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/*azure* /etc/apt/sources.list.d/*microsoft*
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            gcc-riscv64-unknown-elf \
+            binutils-riscv64-unknown-elf \
+            qemu-system-misc \
+            python3
+
+      - name: Execute EDR Security Tests
+        run: make test-edr
+
+      - name: Execute MLFQ Scheduler Tests
+        run: make test-mlfq
+
+      - name: Execute False Positive Workload Tests
+        run: make test-false-positive
+
+      - name: Execute Unquarantine Flow Tests
+        run: make test-unquarantine
+
+      - name: Execute Global Pressure Limiter Tests
+        run: make test-global-pressure
+
+      - name: Execute Persistent Log Tests
+        run: make test-persistent-log
+
+  usertests-quick:
+    name: Core OS Usertests (Quick)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Install Toolchain & QEMU RISC-V
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/*azure* /etc/apt/sources.list.d/*microsoft*
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            gcc-riscv64-unknown-elf \
+            binutils-riscv64-unknown-elf \
+            qemu-system-misc \
+            python3
+
+      - name: Execute Core Usertests
+        run: python3 scripts/test-xv6.py -q usertests
+
+  benchmark:
+    name: MLFQ vs RR Benchmark (stats + artifacts)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Install Toolchain & QEMU RISC-V
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/*azure* /etc/apt/sources.list.d/*microsoft*
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            gcc-riscv64-unknown-elf \
+            binutils-riscv64-unknown-elf \
+            qemu-system-misc \
+            python3 \
+            python3-matplotlib
+
+      # 5 runs per cell, median/min/max/stdev; writes CSV and PNG artifacts.
+      - name: Execute Benchmark Suite
+        run: python3 scripts/test-xv6.py benchmark
+
+      - name: Upload Benchmark Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            benchmark_results.csv
+            benchmark_plot.png
+          if-no-files-found: error
